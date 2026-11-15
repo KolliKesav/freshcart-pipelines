@@ -25,9 +25,14 @@ def main():
 
     def on_message(ch, method, properties, body):
         msg = json.loads(body)
+        if "zone" not in msg:
+            # bad message: reject it and do NOT put it back in the queue
+            print(f"[{name}] NACK key={method.routing_key} id={msg.get('id')} reason=missing zone", flush=True)
+            ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+            return
         print(
-            f"[{name}] key={method.routing_key} id={msg['id']} "
-            f"zone={msg.get('zone')} type={msg.get('type')}",
+            f"[{name}] ACK key={method.routing_key} id={msg['id']} "
+            f"zone={msg['zone']} type={msg.get('type')}",
             flush=True,
         )
         ch.basic_ack(delivery_tag=method.delivery_tag)
